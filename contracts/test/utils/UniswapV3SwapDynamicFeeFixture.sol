@@ -2,15 +2,15 @@
 pragma solidity =0.7.6;
 pragma abicoder v2;
 
-import "contracts/UniswapV3Pool.sol";
-import "contracts/UniswapV3Factory.sol";
-import "contracts/interfaces/IUniswapV3Pool.sol";
-import "contracts/interfaces/callback/IUniswapV3MintCallback.sol";
-import "contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
-import "contracts/libraries/TickMath.sol";
-
 import "contracts/SwapRouter.sol";
 import "contracts/interfaces/ISwapRouter.sol";
+
+import "v3-core/UniswapV3Pool.sol";
+import "v3-core/UniswapV3Factory.sol";
+import "v3-core/interfaces/IUniswapV3Pool.sol";
+//import "contracts/interfaces/callback/IUniswapV3MintCallback.sol";
+//import "contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
+import "v3-core/libraries/TickMath.sol";
 
 import "contracts/test/TestERC20.sol";
 
@@ -51,14 +51,14 @@ contract UniswapV3SwapDynamicFeeFixture is Test, IUniswapV3MintCallback, IUniswa
         vm.startPrank(poolDeployer);
 
         // Deploy Factory
-        factory = IUniswapV3Factory(address(new UniswapV3Factory()));
+        uniswapV3Factory = new UniswapV3Factory();
 
         // Deploy token WETH9
         WETH9 = address(new TestERC20(1_000_000 * 10**18));
 
         // Deploy Router
         swapRouter = new SwapRouter(
-            address(factory), 
+            address(uniswapV3Factory), 
             WETH9
         );
 

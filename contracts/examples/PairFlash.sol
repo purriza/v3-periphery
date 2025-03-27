@@ -9,7 +9,7 @@ import '../base/PeripheryPayments.sol';
 import '../base/PeripheryImmutableState.sol';
 import '../libraries/PoolAddress.sol';
 import '../libraries/CallbackValidation.sol';
-import '../libraries/TransferHelper.sol';
+import '../libraries/TransferHelperPeriphery.sol';
 import '../interfaces/ISwapRouter.sol';
 
 /// @title Flash contract implementation
@@ -60,7 +60,7 @@ contract PairFlash is IUniswapV3FlashCallback, PeripheryPayments {
         uint256 amount1Min = LowGasSafeMath.add(decoded.amount1, fee1);
 
         // call exactInputSingle for swapping token1 for token0 in pool with fee2
-        TransferHelper.safeApprove(token1, address(swapRouter), decoded.amount1);
+        TransferHelperPeriphery.safeApprove(token1, address(swapRouter), decoded.amount1);
         uint256 amountOut0 =
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({
@@ -76,7 +76,7 @@ contract PairFlash is IUniswapV3FlashCallback, PeripheryPayments {
             );
 
         // call exactInputSingle for swapping token0 for token 1 in pool with fee3
-        TransferHelper.safeApprove(token0, address(swapRouter), decoded.amount0);
+        TransferHelperPeriphery.safeApprove(token0, address(swapRouter), decoded.amount0);
         uint256 amountOut1 =
             swapRouter.exactInputSingle(
                 ISwapRouter.ExactInputSingleParams({

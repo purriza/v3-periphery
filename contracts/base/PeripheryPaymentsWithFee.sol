@@ -8,7 +8,7 @@ import './PeripheryPayments.sol';
 import '../interfaces/IPeripheryPaymentsWithFee.sol';
 
 import '../interfaces/external/IWETH9.sol';
-import '../libraries/TransferHelper.sol';
+import '../libraries/TransferHelperPeriphery.sol';
 
 abstract contract PeripheryPaymentsWithFee is PeripheryPayments, IPeripheryPaymentsWithFee {
     using LowGasSafeMath for uint256;
@@ -28,8 +28,8 @@ abstract contract PeripheryPaymentsWithFee is PeripheryPayments, IPeripheryPayme
         if (balanceWETH9 > 0) {
             IWETH9(WETH9).withdraw(balanceWETH9);
             uint256 feeAmount = balanceWETH9.mul(feeBips) / 10_000;
-            if (feeAmount > 0) TransferHelper.safeTransferETH(feeRecipient, feeAmount);
-            TransferHelper.safeTransferETH(recipient, balanceWETH9 - feeAmount);
+            if (feeAmount > 0) TransferHelperPeriphery.safeTransferETH(feeRecipient, feeAmount);
+            TransferHelperPeriphery.safeTransferETH(recipient, balanceWETH9 - feeAmount);
         }
     }
 
@@ -48,8 +48,8 @@ abstract contract PeripheryPaymentsWithFee is PeripheryPayments, IPeripheryPayme
 
         if (balanceToken > 0) {
             uint256 feeAmount = balanceToken.mul(feeBips) / 10_000;
-            if (feeAmount > 0) TransferHelper.safeTransfer(token, feeRecipient, feeAmount);
-            TransferHelper.safeTransfer(token, recipient, balanceToken - feeAmount);
+            if (feeAmount > 0) TransferHelperPeriphery.safeTransfer(token, feeRecipient, feeAmount);
+            TransferHelperPeriphery.safeTransfer(token, recipient, balanceToken - feeAmount);
         }
     }
 }
