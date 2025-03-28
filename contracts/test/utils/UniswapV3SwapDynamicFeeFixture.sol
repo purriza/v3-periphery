@@ -104,12 +104,11 @@ contract UniswapV3SwapDynamicFeeFixture is Test, IUniswapV3MintCallback, IUniswa
             1_000_000 * 1e18,          // Amount of token0
             1_000_000 * 1e18           // Amount of token1
         );
-        console.log("Actual liquidity:", uint256(liquidity));
 
         // UniswapV3Pool hash computation (To update in PoolAddress.sol)
-        bytes memory bytecode = type(UniswapV3Pool).creationCode;
+        /*bytes memory bytecode = type(UniswapV3Pool).creationCode;
         bytes32 initCodeHash = keccak256(bytecode);
-        console.logBytes32(initCodeHash);
+        console.logBytes32(initCodeHash);*/
     }
 
     // Helper function to add liquidity
