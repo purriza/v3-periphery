@@ -11,6 +11,9 @@ const LOW_OPTIMIZER_COMPILER_SETTINGS = {
     optimizer: {
       enabled: true,
       runs: 2_000,
+      details: {
+        yul: false
+      }
     },
     metadata: {
       bytecodeHash: 'none',
@@ -25,6 +28,9 @@ const LOWEST_OPTIMIZER_COMPILER_SETTINGS = {
     optimizer: {
       enabled: true,
       runs: 1_000,
+      details: {
+        yul: false
+      }
     },
     metadata: {
       bytecodeHash: 'none',
@@ -39,6 +45,9 @@ const DEFAULT_COMPILER_SETTINGS = {
     optimizer: {
       enabled: true,
       runs: 1_000_000,
+      details: {
+        yul: false
+      }
     },
     metadata: {
       bytecodeHash: 'none',

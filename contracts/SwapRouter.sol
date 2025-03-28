@@ -4,7 +4,8 @@ pragma abicoder v2;
 
 import '@uniswap/v3-core/contracts/libraries/SafeCast.sol';
 import '@uniswap/v3-core/contracts/libraries/TickMath.sol';
-import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
+import 'v3-core/interfaces/IUniswapV3Pool.sol';
+//import '@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol';
 
 import './interfaces/ISwapRouter.sol';
 import './base/PeripheryImmutableState.sol';
@@ -16,6 +17,8 @@ import './libraries/Path.sol';
 import './libraries/PoolAddress.sol';
 import './libraries/CallbackValidation.sol';
 import './interfaces/external/IWETH9.sol';
+
+import { console } from "forge-std/console.sol";
 
 /// @title Uniswap V3 Swap Router
 /// @notice Router for stateless execution of swaps against Uniswap V3
@@ -107,7 +110,7 @@ contract SwapRouter is
                     : sqrtPriceLimitX96,
                 abi.encode(data)
             );
-
+        
         return uint256(-(zeroForOne ? amount1 : amount0));
     }
 

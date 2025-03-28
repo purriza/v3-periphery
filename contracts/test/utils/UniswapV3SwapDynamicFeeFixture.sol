@@ -5,14 +5,13 @@ pragma abicoder v2;
 import "contracts/SwapRouter.sol";
 import "contracts/interfaces/ISwapRouter.sol";
 
+import "contracts/test/TestERC20.sol";
+import "contracts/libraries/LiquidityAmounts.sol";
+
 import "v3-core/UniswapV3Pool.sol";
 import "v3-core/UniswapV3Factory.sol";
 import "v3-core/interfaces/IUniswapV3Pool.sol";
-//import "contracts/interfaces/callback/IUniswapV3MintCallback.sol";
-//import "contracts/interfaces/callback/IUniswapV3SwapCallback.sol";
 import "v3-core/libraries/TickMath.sol";
-
-import "contracts/test/TestERC20.sol";
 
 import "forge-std/Test.sol";
 import { console } from "forge-std/console.sol";
@@ -54,7 +53,7 @@ contract UniswapV3SwapDynamicFeeFixture is Test, IUniswapV3MintCallback, IUniswa
         uniswapV3Factory = new UniswapV3Factory();
 
         // Deploy token WETH9
-        WETH9 = address(new TestERC20(1_000_000 * 10**18));
+        WETH9 = address(new TestERC20(1_000_000 * 1e18));
 
         // Deploy Router
         swapRouter = new SwapRouter(
@@ -67,17 +66,14 @@ contract UniswapV3SwapDynamicFeeFixture is Test, IUniswapV3MintCallback, IUniswa
         token1 = new TestERC20(500_000 * 1e18);
 
         // Test contract, to add liquidity
-        token0.mint(address(this), 100_000 * 10**18);
-        token1.mint(address(this), 100_000 * 10**18);
+        token0.mint(address(this), 1_000_000 * 1e18);
+        token1.mint(address(this), 1_000_000 * 1e18);
 
         // Users
-        token0.mint(alice, 100_000 * 10**18);
-        token1.mint(alice, 100_000 * 10**18);
-        token0.mint(bob, 100_000 * 10**18);
-        token1.mint(bob, 100_000 * 10**18);
-
-        // Deploy UniswapV3Factory contract
-        uniswapV3Factory = new UniswapV3Factory();
+        token0.mint(alice, 400_000 * 1e18);
+        token1.mint(alice, 400_000 * 1e18);
+        token0.mint(bob, 400_000 * 1e18);
+        token1.mint(bob, 400_000 * 1e18);
 
         // Deploy the UniswapV3Pool
         address poolAddress = uniswapV3Factory.createPool(
@@ -101,26 +97,45 @@ contract UniswapV3SwapDynamicFeeFixture is Test, IUniswapV3MintCallback, IUniswa
         token1.approve(poolAddress, type(uint256).max);
 
         // Add liquidity
-        addLiquidity(
-            -tickSpacing * 10,   // Lower tick
-            tickSpacing * 10,    // Upper tick
-            100 * 1e18,          // Amount of token0
-            100 * 1e18           // Amount of token1
+        uint128 liquidity = addLiquidity(
+            sqrtPriceX96,
+            -tickSpacing * 10,       // Lower tick
+            tickSpacing * 10,        // Upper tick
+            1_000_000 * 1e18,          // Amount of token0
+            1_000_000 * 1e18           // Amount of token1
         );
+        console.log("Actual liquidity:", uint256(liquidity));
+
+        // UniswapV3Pool hash computation (To update in PoolAddress.sol)
+        bytes memory bytecode = type(UniswapV3Pool).creationCode;
+        bytes32 initCodeHash = keccak256(bytecode);
+        console.logBytes32(initCodeHash);
     }
 
     // Helper function to add liquidity
     function addLiquidity(
+        uint160 sqrtPriceX96,
         int24 tickLower,
         int24 tickUpper,
         uint256 amount0Desired,
         uint256 amount1Desired
-    ) internal returns (uint256 amount0, uint256 amount1) {
-        (amount0, amount1) = uniswapV3Pool.mint(
+    ) internal returns (uint128 liquidity) {
+        uint160 sqrtPriceLowerX96 = TickMath.getSqrtRatioAtTick(tickLower);
+        uint160 sqrtPriceUpperX96 = TickMath.getSqrtRatioAtTick(tickUpper);
+
+        liquidity = LiquidityAmounts.getLiquidityForAmounts(
+            sqrtPriceX96,
+            sqrtPriceLowerX96,
+            sqrtPriceUpperX96,
+            amount0Desired,
+            amount1Desired
+        );
+        
+        uniswapV3Pool.mint(
             poolDeployer,
             tickLower,
             tickUpper,
-            uint128((amount0Desired + amount1Desired) / 2),
+            liquidity,
             abi.encode(0)
         );
     }
@@ -130,25 +145,10 @@ contract UniswapV3SwapDynamicFeeFixture is Test, IUniswapV3MintCallback, IUniswa
         uint256 token0Amount, 
         uint256 token1Amount
     ) internal pure returns (uint160 sqrtPriceX96, int24 tick) {
-        // Calculate initial price based on the ratio of tokens (simplified)
-        uint256 price = (token1Amount * 10**18) / token0Amount;
-        
-        // Convert price to sqrt(price)
-        sqrtPriceX96 = uint160(sqrt(price) * (2**96));
-        
+        // Calculate initial price based on the ratio of tokens (simplified 1:1)
         sqrtPriceX96 = uint160(2**96);
-        // Calculating the exact tick is complex and might require more precise logic
-        tick = 0;
-    }
 
-    // Helper function for square roots
-    function sqrt(uint256 x) internal pure returns (uint256 y) {
-        uint256 z = (x + 1) / 2;
-        y = x;
-        while (z < y) {
-            y = z;
-            z = (x / z + z) / 2;
-        }
+        tick = 0;
     }
 
     /// @inheritdoc IUniswapV3MintCallback
